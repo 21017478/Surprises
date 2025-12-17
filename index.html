@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You</title>
+    <!-- Premium Readable Fonts: Cormorant Garamond is elegant and highly readable. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,700&family=Pinyon+Script&display=swap"
+        rel="stylesheet">
+
+    <!-- GSAP for robust sequencing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        :root {
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.0);
+            /* Completely clear base */
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+            --text-gold: #FFD700;
+            --text-warm: #FFE5B4;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            /* overflow: hidden; -- Allow scrolling if needed, but flex handles centering */
+            overflow-y: auto;
+            font-family: 'Cormorant Garamond', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Vertical center if it fits */
+        }
+
+        /* 1. The Environment (Background) */
+        /* Reverted: Lighter side deep sunset as per original spec */
+        #background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #4A3F69 0%, #7d5a86 35%, #c77b89 70%, #ffc6a5 100%);
+            z-index: -2;
+        }
+
+        /* Canvas for Bokeh Fireworks */
+        canvas#bokeh {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            /* Removed blur for definition */
+            /* filter: blur(1px); */
+        }
+
+        /* 2. The Container (The Card) */
+        #card-container {
+            position: relative;
+            /* Relative for flex flow */
+            width: 90%;
+            max-width: 450px;
+            margin: auto;
+            /* Magic centering in flex */
+            transform: scale(0.9) translateY(50px);
+            /* Initial state for animation */
+            width: 90%;
+            max-width: 450px;
+            /* Slightly wider for new font */
+            /* Min height for content */
+            min-height: 500px;
+
+            /* Glassmorphism */
+            /* Glassmorphism */
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            /* Clearer look (User requested more transparency) */
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            /* iOS notification style */
+            box-shadow: var(--glass-shadow);
+
+            /* Subtle sheen/reflection overlay */
+            overflow: hidden;
+            opacity: 0;
+            /* Hidden initially for fade in */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        /* Sheen effect */
+        #card-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 45%, rgba(255, 255, 255, 0.07) 50%, transparent 55%);
+            transform: rotate(25deg);
+            pointer-events: none;
+        }
+
+        /* 3. The Typography & Content */
+        .text-line {
+            position: relative;
+            font-size: 2.8rem;
+            line-height: 1.3;
+            font-weight: 700;
+            font-style: italic;
+            color: var(--text-warm);
+            /* Ensured no background is set */
+            background: transparent;
+            /* background: linear-gradient(to right, #fffdf2 0%, #ffd700 50%, #fffdf2 100%); */
+            /* -webkit-background-clip: text; */
+            /* -webkit-text-fill-color: transparent; */
+            /* text-shadow: 0 0 15px rgba(255, 215, 0, 0.3); */
+
+            margin: 10px 0;
+            opacity: 1;
+            /* Visible logic handled by clip-path */
+            display: block;
+            /* white-space: nowrap; */
+
+            /* Initial State: Hidden by clip-path */
+            /* clip-path: inset(0 100% 0 0); */
+            /* padding-right: 5px; */
+            /* Space for the glow tip */
+        }
+
+        /* Characters for typing effect */
+        .char {
+            display: inline-block;
+            opacity: 0;
+            /* Initial slight blur for "forming" effect */
+            filter: blur(4px);
+            transform: translateY(5px);
+        }
+
+        /* The Glow Tip (Pen head) */
+        /* .glow-tip {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            Alignts to the revealing edge
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow:
+                0 0 10px 2px #FFD700,
+                0 0 20px 5px rgba(255, 107, 107, 0.4);
+            transform: translate(50%, -50%);
+            opacity: 0;
+            Hidden when not writing
+            pointer-events: none;
+            z-index: 10;
+        } */
+
+        .signature-block {
+            margin-top: 30px;
+            /* Reduced from 40px */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sig-word {
+            font-family: 'Cormorant Garamond', serif;
+            /* Matching font as requested for readability over script */
+            font-weight: 700;
+            font-style: italic;
+            font-size: 3.5rem;
+            color: #FFD700;
+            position: relative;
+            opacity: 1;
+            /* clip-path: inset(0 100% 0 0); */
+            line-height: 1.0;
+            /* Tighten line height */
+            margin-bottom: 5px;
+            /* Slight spacing */
+        }
+
+        .sig-char {
+            display: inline-block;
+            opacity: 0;
+        }
+
+        .sig-underline {
+            margin-top: 5px;
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #FFD700, transparent);
+            transform: scaleX(0);
+            /* Hidden */
+            transform-origin: center;
+            /* Bloom from center out? */
+            border-radius: 2px;
+            box-shadow: 0 0 10px #FFD700;
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 600px) {
+            #card-container {
+                width: 95%;
+                /* Prioritize mobile width */
+                min-height: auto;
+                /* Allow content to dictate height */
+                padding: 40px 15px;
+                /* Comfortable padding */
+                margin: auto;
+                transform: scale(1) translateY(0);
+                /* Reset scale for mobile */
+            }
+
+            .text-line {
+                font-size: 2.1rem;
+                /* Slightly larger for readability */
+                line-height: 1.25;
+                margin: 4px 0;
+            }
+
+            .sig-word {
+                font-size: 2.8rem;
+                line-height: 1.1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="background"></div>
+    <canvas id="bokeh"></canvas>
+
+    <div id="card-container">
+        <!-- Lines of the poem -->
+        <!-- "One love" -->
+        <div class="line-wrapper">
+            <div class="text-line" id="line1" data-text="One Love"></div>
+        </div>
+
+        <!-- "Shared by Two" -->
+        <div class="line-wrapper">
+            <div class="text-line" id="line2" data-text="Shared by Two"></div>
+        </div>
+
+        <!-- "One Dream" -->
+        <div class="line-wrapper">
+            <div class="text-line" id="line3" data-text="One Dream"></div>
+        </div>
+
+        <!-- "Coming True" -->
+        <div class="line-wrapper">
+            <div class="text-line" id="line4" data-text="Coming True"></div>
+        </div>
+
+        <!-- Spacer -->
+        <div style="height: 20px;"></div>
+
+        <!-- "Wishing both of you" -->
+        <div class="line-wrapper">
+            <div class="text-line" style="font-size: 2rem;" id="line5" data-text="Wishing both of you"></div>
+        </div>
+
+        <!-- "A life of love & happiness" -->
+        <div class="line-wrapper">
+            <div class="text-line" style="font-size: 2rem;" id="line6" data-text="A life of love & happiness"></div>
+        </div>
+
+        <div class="signature-block">
+            <div class="sig-word" id="sig-love" data-text="Love"></div>
+            <div class="sig-word" id="sig-mum" data-text="Mum"></div>
+            <div class="sig-underline" id="sig-line"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Bokeh Fireworks (Canvas) ---
+        const canvas = document.getElementById('bokeh');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.reset();
+                // Ensure initial distribution covers the whole screen evenly
+                this.y = Math.random() * height;
+                this.alpha = Math.random() * this.maxAlpha; // Start with random opacity
+                this.life = Math.random() * this.maxLife;   // Start at random life stage
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = height + Math.random() * 100;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = -0.5 - Math.random() * 1;
+                this.radius = 15 + Math.random() * 35; // Slightly larger min size
+                this.color = this.pickColor();
+                this.alpha = 0;
+                // BOOSTED OPACITY: "Appear more"
+                this.maxAlpha = 0.5 + Math.random() * 0.4;
+                this.life = 0;
+                this.maxLife = 200 + Math.random() * 300;
+            }
+
+            pickColor() {
+                const colors = ['255, 215, 0', '255, 107, 107', '255, 255, 255'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life++;
+
+                // Smoother, persistent fade logic
+                if (this.life < 50) {
+                    this.alpha = (this.life / 50) * this.maxAlpha;
+                } else if (this.life > this.maxLife - 50) {
+                    this.alpha = ((this.maxLife - this.life) / 50) * this.maxAlpha;
+                } else {
+                    this.alpha = this.maxAlpha; // Stay visible longer
+                }
+
+                if (this.life > this.maxLife) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+                // SHARPER GRADIENT: "More defined"
+                // Main color solid until 40%, then fade
+                gradient.addColorStop(0, `rgba(${this.color}, ${this.alpha})`);
+                gradient.addColorStop(0.4, `rgba(${this.color}, ${this.alpha * 0.8})`);
+                gradient.addColorStop(1, `rgba(${this.color}, 0)`);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+            }
+        }
+
+        // Init particles - Moderate count but high impact
+        for (let i = 0; i < 40; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateBokeh() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Loop through particles
+            particles.forEach(p => {
+                p.update();
+
+                // PROGRESSIVE BLUR LOGIC
+                // Map Y position to Blur amount.
+                // Bottom of screen (height) -> 0 blur
+                // Top of screen (0) -> Max blur (e.g. 8px)
+
+                // Calculate normalized height (0 at top, 1 at bottom)
+                const normalizedY = p.y / height;
+
+                // Invert so top is 1, bottom is 0
+                const blurAmount = (1 - normalizedY) * 6; // Max 6px blur at top
+
+                // Optimized: Only apply filter if significant
+                if (blurAmount > 0.5) {
+                    ctx.filter = `blur(${blurAmount}px)`;
+                } else {
+                    ctx.filter = 'none';
+                }
+
+                p.draw();
+            });
+
+            // Reset filter for next frame clear
+            ctx.filter = 'none';
+
+            requestAnimationFrame(animateBokeh);
+        }
+        animateBokeh();
+
+
+        // --- 2. Sequence Controller (GSAP) ---
+
+        // Helper to prepare text
+        function splitText(selector, charClass = 'char') {
+            const el = document.querySelector(selector);
+            const text = el.getAttribute('data-text');
+            el.innerHTML = '';
+
+            // Split into chars and wrap
+            text.split('').forEach(char => {
+                const span = document.createElement('span');
+                span.textContent = char === ' ' ? '\u00A0' : char; // Preserve space
+                span.className = charClass;
+                el.appendChild(span);
+            });
+
+            return el.querySelectorAll('.' + charClass);
+        }
+
+        // Prepare all lines
+        const lines = [
+            splitText('#line1'),
+            splitText('#line2'),
+            splitText('#line3'),
+            splitText('#line4'),
+            splitText('#line5'),
+            splitText('#line6'),
+            splitText('#sig-love', 'sig-char'),
+            splitText('#sig-mum', 'sig-char')
+        ];
+
+        // Animate Line Function
+        function animateChars(chars, delay = 0) {
+            const tl = gsap.timeline({ delay: delay });
+
+            // Staggered fade in with a slight "pop"
+            tl.to(chars, {
+                opacity: 1,
+                filter: "blur(0px)",
+                y: 0,
+                duration: 0.8,
+                stagger: 0.08, // Typing speed
+                ease: "power2.out",
+                // Enhance the "appearing" effect with a text-shadow bloom
+                onStart: function () {
+                    // Optional: could add sound or specific trigger here
+                }
+            });
+
+            // Add a "bloom" effect on each char as it appears??
+            // Simplified: Just use the stagger logic above which includes a y-translation and blur removal.
+
+            return tl;
+        }
+
+        const masterTl = gsap.timeline({ delay: 1 });
+
+        // Phase 1: Fade In Card
+        masterTl.to('#card-container', {
+            opacity: 1,
+            y: 0, /* Slide to natural position */
+            duration: 2,
+            ease: "power3.out"
+        });
+
+        // Phase 2: Typing the content
+        // Line 1: One Love
+        masterTl.add(animateChars(lines[0]), "+=0.5");
+
+        // Line 2
+        masterTl.add(animateChars(lines[1]), "-=0.2"); // Overlap slightly for fluid reading
+
+        // Line 3
+        masterTl.add(animateChars(lines[2]), "-=0.2");
+
+        // Line 4
+        masterTl.add(animateChars(lines[3]), "-=0.2");
+
+        // Line 5 (Longer pause before "Wishing both of you")
+        masterTl.add(animateChars(lines[4]), "+=0.3");
+
+        // Line 6
+        masterTl.add(animateChars(lines[5]), "+=0.1");
+
+        // Phase 3: Signature
+        masterTl.add(animateChars(lines[6]), "+=0.5"); // Love
+        masterTl.add(animateChars(lines[7]), "+=0.2"); // Mum
+
+        // Phase 4: Underline
+        masterTl.to('#sig-line', {
+            scaleX: 1,
+            duration: 1.5,
+            ease: "power2.out"
+        });
+
+    </script>
+</body>
+
+</html>
