@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>🦖 Happy 6th Birthday Orhan! 🎉</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Bangers', cursive;
+        }
+
+        .video-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        /* Clean overlay container - BOTTOM LEFT */
+        .overlay {
+            position: fixed;
+            bottom: 5%;
+            left: 3%;
+            width: auto;
+            height: auto;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-end;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .burst {
+            position: absolute;
+            left: -180px;
+            bottom: -50px;
+            width: 700px;
+            height: 550px;
+            opacity: 0;
+            transform: scale(0);
+            z-index: 1;
+            transform-origin: center center;
+        }
+
+        .burst.show {
+            animation: burstIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+                       burstRotate 8s linear infinite 0.5s; /* Slow rotation after appear */
+        }
+
+        @keyframes burstIn {
+            0% { opacity: 0; transform: scale(0) rotate(-10deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0); }
+        }
+
+        @keyframes burstRotate {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.02) rotate(2deg); }
+            50% { transform: scale(1) rotate(0deg); }
+            75% { transform: scale(1.02) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* Clean SVG burst shape */
+        .burst svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 8px 25px rgba(0,0,0,0.4));
+        }
+
+        /* Text container - Centered on Burst */
+        .text-container {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            padding-bottom: 20px;
+            padding-left: 20px;
+        }
+
+        /* Each word */
+        .word {
+            opacity: 0;
+            transform: scale(0.3) translateY(30px);
+            line-height: 1.1;
+        }
+
+        .word.show {
+            animation: wordPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes wordPop {
+            0% { opacity: 0; transform: scale(0.3) translateY(30px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* HAPPY - BIGGER */
+        .word-happy {
+            font-size: 5.5rem;
+            color: #ff3300;
+            -webkit-text-stroke: 4px #000;
+            text-shadow: 5px 5px 0 #cc0000, 8px 8px 0 rgba(0,0,0,0.3);
+            letter-spacing: 5px;
+        }
+
+        /* 6th - BIGGER */
+        .word-age {
+            font-size: 7rem;
+            color: #ffcc00;
+            -webkit-text-stroke: 5px #000;
+            text-shadow: 5px 5px 0 #cc9900, 8px 8px 0 rgba(0,0,0,0.3);
+            margin: -10px 0;
+        }
+
+        /* BIRTHDAY - BIGGER */
+        .word-birthday {
+            font-size: 5rem;
+            color: #00bb44;
+            -webkit-text-stroke: 4px #000;
+            text-shadow: 5px 5px 0 #007722, 8px 8px 0 rgba(0,0,0,0.3);
+            letter-spacing: 4px;
+        }
+
+        /* ORHAN! - BIGGER */
+        .word-name {
+            font-size: 6rem;
+            color: #ff6600;
+            -webkit-text-stroke: 4px #000;
+            text-shadow: 5px 5px 0 #cc4400, 8px 8px 0 rgba(0,0,0,0.3);
+            margin-top: -8px;
+        }
+
+        /* Mobile */
+        @media (max-width: 600px) {
+            .overlay { 
+                width: auto; 
+                left: 0;
+                bottom: 15%; 
+                justify-content: flex-start;
+                padding-left: 0;
+            }
+            .burst { 
+                width: 500px; /* Slightly smaller */
+                height: 420px; 
+                left: -190px; /* More to the left */
+                bottom: -60px;
+            }
+            .text-container {
+                padding-left: 10px; /* Closer to edge */
+                align-items: flex-start; 
+                text-align: left;
+            }
+            .word-happy { font-size: 3.2rem; margin-left: 5px; }
+            .word-age { font-size: 4.5rem; margin-left: 10px; }
+            .word-birthday { font-size: 3.0rem; }
+            .word-name { font-size: 3.6rem; margin-left: 5px; }
+        }
+    </style>
+</head>
+
+<body>
+    <video class="video-bg" id="video" autoplay muted playsinline loop>
+        <source src="./dino-video.mp4" type="video/mp4">
+    </video>
+
+    <div class="overlay">
+        <!-- Clean SVG Burst -->
+        <div class="burst" id="burst">
+            <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="burstGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ffee00"/>
+                        <stop offset="50%" style="stop-color:#ff8800"/>
+                        <stop offset="100%" style="stop-color:#ff4400"/>
+                    </linearGradient>
+                    <linearGradient id="innerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ffffff"/>
+                        <stop offset="100%" style="stop-color:#fff8e0"/>
+                    </linearGradient>
+                </defs>
+                <!-- Outer burst -->
+                <path d="M200,10 L220,60 L270,20 L250,70 L310,50 L275,95 L340,90 L290,125 L360,140 L295,155 L350,190 L285,185 L320,235 L265,210 L270,270 L220,230 L200,290 L180,230 L130,270 L135,210 L80,235 L115,185 L50,190 L105,155 L40,140 L110,125 L60,90 L125,95 L90,50 L150,70 L130,20 L180,60 Z" 
+                      fill="url(#burstGrad)" stroke="#cc5500" stroke-width="3"/>
+                <!-- Inner white -->
+                <path d="M200,35 L215,70 L255,45 L240,85 L290,70 L265,105 L315,105 L275,130 L330,145 L280,155 L320,185 L270,175 L295,215 L250,195 L255,245 L215,210 L200,260 L185,210 L145,245 L150,195 L105,215 L130,175 L80,185 L120,155 L70,145 L125,130 L85,105 L135,105 L110,70 L160,85 L145,45 L185,70 Z" 
+                      fill="url(#innerGrad)"/>
+            </svg>
+        </div>
+
+        <!-- Words appearing one at a time -->
+        <div class="text-container">
+            <div class="word word-happy" id="w1">HAPPY</div>
+            <div class="word word-age" id="w2">6th</div>
+            <div class="word word-birthday" id="w3">BIRTHDAY</div>
+            <div class="word word-name" id="w4">ORHAN!</div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const burst = document.getElementById('burst');
+        const words = [
+            document.getElementById('w1'),
+            document.getElementById('w2'),
+            document.getElementById('w3'),
+            document.getElementById('w4')
+        ];
+
+        let triggered = false;
+
+        video.addEventListener('timeupdate', () => {
+            if (video.currentTime >= 2 && !triggered) trigger();
+        });
+
+        document.addEventListener('click', () => { if (!triggered) trigger(); });
+        document.addEventListener('touchstart', () => { if (!triggered) trigger(); });
+
+        function trigger() {
+            triggered = true;
+
+            // Show burst first
+            burst.classList.add('show');
+
+            // Words appear one at a time with delay
+            setTimeout(() => words[0].classList.add('show'), 300);   // HAPPY
+            setTimeout(() => words[1].classList.add('show'), 650);   // 6th
+            setTimeout(() => words[2].classList.add('show'), 1000);  // BIRTHDAY
+            setTimeout(() => {
+                words[3].classList.add('show');  // ORHAN!
+                celebrate();
+            }, 1350);
+        }
+
+        function celebrate() {
+            confetti({
+                particleCount: 120,
+                spread: 80,
+                origin: { x: 0.25, y: 0.5 },
+                colors: ['#ff3300', '#ffcc00', '#00bb44', '#ff6600']
+            });
+
+            setTimeout(() => confetti({ particleCount: 80, spread: 70, origin: { x: 0.3, y: 0.6 }, colors: ['#ffcc00', '#ff6600'] }), 250);
+
+            let i = 0;
+            const loop = setInterval(() => {
+                confetti({ particleCount: 15, spread: 40, origin: { x: Math.random() * 0.4 + 0.1, y: Math.random() * 0.4 + 0.3 } });
+                if (++i > 8) clearInterval(loop);
+            }, 300);
+        }
+    </script>
+</body>
+</html>
